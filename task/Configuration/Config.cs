@@ -1,10 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
 
-namespace ApiTools.Codegen.Task
+namespace ApiTools.Codegen.Task.Configuration
 {
     /// <summary>
     /// Specifies build configuration and project type output settings.
     /// </summary>
+    [Serializable]
     public class Config
     {
         /// <summary>
@@ -20,6 +21,6 @@ namespace ApiTools.Codegen.Task
         /// <summary>
         /// Configuration for individual project type outputs.
         /// </summary>
-        public ProjectSettings[] Projects { get; set; }
+        public ProjectSettingsCollection Projects { get; set; } = new ProjectSettingsCollection();
     }
 }

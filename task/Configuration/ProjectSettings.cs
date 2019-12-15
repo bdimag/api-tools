@@ -1,5 +1,8 @@
-﻿namespace ApiTools.Codegen.Task
+﻿using System;
+
+namespace ApiTools.Codegen.Task.Configuration
 {
+    [Serializable]
     public class ProjectSettings
     {
         /// <summary>
@@ -32,7 +35,7 @@
             if (obj != null && obj is ProjectSettings project)
             {
                 return project.Type == Type
-                       && (project.Name.Equals(Name, System.StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(project.Name) || string.IsNullOrEmpty(Name));
+                       && (string.IsNullOrEmpty(project.Name) || string.IsNullOrEmpty(Name) || project.Name.Equals(Name, StringComparison.OrdinalIgnoreCase));
             }
 
             return false;
@@ -41,7 +44,7 @@
         public override int GetHashCode()
         {
             var hashCode = -243844509;
-            hashCode = hashCode * -1521134295 + System.StringComparer.OrdinalIgnoreCase.GetHashCode(Name);
+            hashCode = hashCode * -1521134295 + StringComparer.OrdinalIgnoreCase.GetHashCode(Name);
             hashCode = hashCode * -1521134295 + Type.GetHashCode();
             return hashCode;
         }

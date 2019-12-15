@@ -7,8 +7,12 @@
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
     <ItemGroup Label="Build_Files">
-        <Content Include="ApiTools.Codegen.Targets">
+        <Content Include="ApiTools.Codegen.targets">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
         <None Update="Defaults.json">
@@ -28,12 +32,13 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="Config.cs" />
+        <Compile Include="Configuration\Config.cs" />
+        <Compile Include="Configuration\ProjectSettingsCollection.cs" />
         <Compile Include="CreateClientAssembly.cs" />
         <Compile Include="CreateClientAssembly.ITask.cs">
             <DependentUpon>CreateClientAssembly.cs</DependentUpon>
         </Compile>
-        <Compile Include="ProjectSettings.cs" />
+        <Compile Include="Configuration\ProjectSettings.cs" />
     </ItemGroup>
 
 </Project>

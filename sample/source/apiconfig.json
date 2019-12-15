@@ -1,0 +1,18 @@
+﻿{
+    "Projects": [
+        {
+            "Type": "WebApi",
+            "Enabled": false
+        },
+        {
+            "Type": "ClientLibrary",
+            "Enabled": true,
+            "OutputPath": "..\\client"
+        },
+        {
+            "Type": "ClientScripts",
+            "Enabled": false,
+            "OutputPath": "..\\client"
+        }
+    ]
+}

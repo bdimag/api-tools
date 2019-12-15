@@ -1,12 +1,11 @@
-﻿using Microsoft.Build.Framework;
+﻿using ApiTools.Codegen.Task.Configuration;
+using Microsoft.Build.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using static System.AppDomain;
 using Reflection = System.Reflection;
 
 namespace ApiTools.Codegen.Task
@@ -34,13 +33,24 @@ namespace ApiTools.Codegen.Task
         public string[] FileWrites { get; set; }
 
         /// <summary>
+        /// Determines the absolute path for the specified <paramref name="path"/> relative to the other.
+        /// </summary>
+        /// <param name="path">A relative path.</param>
+        /// <param name="relativeTo">An absolute path from which the path to <paramref name="path"/> is determined.</param>
+        private string GetAbsolutePath(string path, string relativeTo)
+        {
+            WriteMessage($"@@@ \"{path}\" from \"{relativeTo}\".");
+            return new DirectoryInfo(Path.Combine(relativeTo, path)).FullName;
+        }
+
+        /// <summary>
         /// Retrieves all types from an assembly that have the <see cref="ClientTypeAttribute"/> applied.
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
         private Type[] GetTypes(string path)
         {
-            CurrentDomain.AssemblyResolve += ResolveLocalAssembly;
+            AppDomain.CurrentDomain.AssemblyResolve += ResolveLocalAssembly;
 
             var assembly = Reflection.Assembly.LoadFrom(path);
             var assemblyTypes = new List<Type>();
@@ -53,9 +63,7 @@ namespace ApiTools.Codegen.Task
                 }
             }
 
-            // TODO make sure this is a safe time to stop resolving local dlls;
-            //      will still need to retrieve members and member attributes
-            CurrentDomain.AssemblyResolve -= ResolveLocalAssembly;
+            AppDomain.CurrentDomain.AssemblyResolve -= ResolveLocalAssembly;
 
             return assemblyTypes.ToArray();
         }
@@ -94,32 +102,38 @@ namespace ApiTools.Codegen.Task
             if (effectiveConfiguration == null)
             {
                 var effConfig = new Config();
-                var allProjects = new List<ProjectSettings>();
 
                 if (ConfigFiles != null)
                 {
-                    // TODO if there's more than one file, properties are overwritten--order should be Defaults.json (provided
-                    //      here) first, following by any others provided by the project that invoked the task.
                     foreach (var configFile in ConfigFiles)
                     {
+                        string configPath = configFile.GetMetadata("FullPath");
+                        if (string.IsNullOrEmpty(configPath) || !File.Exists(configPath))
+                        {
+                            WriteMessage($"Invalid config path specified: \"{configFile.GetMetadata("FullPath")}\".");
+                            continue;
+                        }
+
+                        string configDirectory = Path.GetDirectoryName(configPath);
                         Config config = null;
                         try
                         {
                             var jsonSerializerOptions = new JsonSerializerOptions();
                             jsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-
-                            config = JsonSerializer.Deserialize<Config>(File.ReadAllText(configFile.GetMetadata("Identity")), jsonSerializerOptions);
+                            config = JsonSerializer.Deserialize<Config>(File.ReadAllText(configPath), jsonSerializerOptions);
                         }
                         catch (JsonException ex)
                         {
-                            WriteMessage($"Invalid config file at \"{configFile.GetMetadata("Identity")}\": {ex.Message}.");
+                            WriteMessage($"Invalid config file at \"{configPath}\": {ex.Message}.");
                             continue;
                         }
                         catch
                         {
-                            WriteMessage($"Invalid config file at \"{configFile.GetMetadata("Identity")}\".");
+                            WriteMessage($"Invalid config file at \"{configPath}\".");
                             continue;
                         }
+
+                        WriteMessage($"Evaluating config file at \"{configPath}\".");
 
                         if (!string.IsNullOrEmpty(config.DefaultNamespace))
                         {
@@ -127,13 +141,13 @@ namespace ApiTools.Codegen.Task
                         }
                         if (!string.IsNullOrEmpty(config.DefaultOutputPath))
                         {
-                            effConfig.DefaultOutputPath = config.DefaultOutputPath;
+                            effConfig.DefaultOutputPath = GetAbsolutePath(config.DefaultOutputPath, configDirectory);
                         }
                         if (config.Projects != null)
                         {
                             foreach (var project in config.Projects)
                             {
-                                var existingProject = allProjects.FirstOrDefault(p => project.Equals(p));
+                                var existingProject = effConfig.Projects.Find(project);
                                 if (existingProject != null)
                                 {
                                     if (project.Enabled.HasValue)
@@ -150,19 +164,17 @@ namespace ApiTools.Codegen.Task
                                     }
                                     if (!string.IsNullOrEmpty(project.OutputPath))
                                     {
-                                        existingProject.OutputPath = project.OutputPath;
+                                        existingProject.OutputPath = GetAbsolutePath(project.OutputPath, configDirectory);
                                     }
                                 }
                                 else
                                 {
-                                    allProjects.Add(project);
+                                    effConfig.Projects.Add(project);
                                 }
                             }
                         }
                     }
                 }
-
-                effConfig.Projects = allProjects.ToArray();
 
                 // defaults based on values known to the task
                 if (string.IsNullOrEmpty(effConfig.DefaultOutputPath))
@@ -175,10 +187,6 @@ namespace ApiTools.Codegen.Task
                 }
                 foreach (var project in effConfig.Projects)
                 {
-                    if (string.IsNullOrEmpty(project.OutputPath))
-                    {
-                        project.OutputPath = effConfig.DefaultOutputPath;
-                    }
                     if (string.IsNullOrEmpty(project.Namespace))
                     {
                         project.Namespace = effConfig.DefaultNamespace;
@@ -187,10 +195,16 @@ namespace ApiTools.Codegen.Task
                     {
                         project.Name = $"{project.Namespace}.{project.Type}";
                     }
+                    if (string.IsNullOrEmpty(project.OutputPath))
+                    {
+                        project.OutputPath = Path.Combine(effConfig.DefaultOutputPath, $"{project.Name}_{project.Type}");
+                    }
                 }
 
                 effectiveConfiguration = effConfig;
             }
+
+            WriteMessage(JsonSerializer.Serialize(effectiveConfiguration, new JsonSerializerOptions { IgnoreNullValues = true, WriteIndented = true }));
 
             return effectiveConfiguration;
         }
@@ -215,35 +229,41 @@ namespace ApiTools.Codegen.Task
             }
 
             var fileWrites = new List<string>();
-            using (var builder = new LibraryBuilder())
+            using (var builder = new LibraryBuilder(types))
             {
-                builder.Add();
-
                 foreach (var project in GetEffectiveConfiguration().Projects)
                 {
+                    if (project.Enabled != true)
+                    {
+                        WriteMessage($"Skipping project \"{project.Name}\" because it is not enabled.");
+                        continue;
+                    }
+
                     WriteMessage($"Starting build of {project.Type} project \"{project.Name}\" in directory \"{project.OutputPath}\"");
-                    foreach (var file in builder.Build())
+                    foreach (var file in builder.Build(project.Type, project.Name, project.Namespace))
                     {
                         var filePath = Path.Combine(project.OutputPath, file.Path);
                         fileWrites.Add(filePath);
+
+                        // make sure the target directory exists
+                        var directory = Path.GetDirectoryName(filePath);
+                        if (!Directory.Exists(directory))
+                        {
+                            Directory.CreateDirectory(directory);
+                        }
 
                         // write the file to disk
                         using (var fileStream = File.OpenWrite(filePath))
                         using (var streamWriter = new StreamWriter(fileStream))
                         {
-                            // TODO if outputing to another, existing project, the project file itself could be updated
-                            //      instead of overwriting to allow multiple assemblies to be built into a single
-                            //      client library.
-
                             WriteMessage($"Writing {project.Type} project file \"{filePath}\"");
+
                             file.Write(streamWriter);
                         }
                     }
                 }
             }
 
-            // TODO if writing to another project in the solution, might not want the files to be deleted during clean;
-            //      this could be specified in the config, or perhaps can be determined automatically based on output path.
             FileWrites = fileWrites.ToArray();
 
             return true;
