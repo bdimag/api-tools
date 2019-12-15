@@ -7,9 +7,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample", "source\Sample.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Client", "client\Sample.Client.csproj", "{846D83AA-2CB4-4121-AA0B-E237D0339A84}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "api", "api\api.csproj", "{9A6ECD9B-B1F9-41C2-99D5-8F170947A834}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.WebApi", "api\Sample.WebApi.csproj", "{9A6ECD9B-B1F9-41C2-99D5-8F170947A834}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "web", "web\web.csproj", "{D0792858-32EC-43B6-8D0C-E62CCB344AF8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Web", "web\Sample.Web.csproj", "{D0792858-32EC-43B6-8D0C-E62CCB344AF8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

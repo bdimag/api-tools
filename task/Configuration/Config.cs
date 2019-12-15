@@ -1,11 +1,8 @@
-﻿using System;
-
-namespace ApiTools.Codegen.Task.Configuration
+﻿namespace ApiTools.Codegen.Task.Configuration
 {
     /// <summary>
     /// Specifies build configuration and project type output settings.
     /// </summary>
-    [Serializable]
     public class Config
     {
         /// <summary>
@@ -18,9 +15,11 @@ namespace ApiTools.Codegen.Task.Configuration
         /// </summary>
         public string DefaultOutputPath { get; set; }
 
+
         /// <summary>
         /// Configuration for individual project type outputs.
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "Serializable property")]
         public ProjectSettingsCollection Projects { get; set; } = new ProjectSettingsCollection();
     }
 }

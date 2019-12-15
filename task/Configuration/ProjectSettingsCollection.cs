@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 
 namespace ApiTools.Codegen.Task.Configuration
 {
-    [Serializable]
     public class ProjectSettingsCollection : Collection<ProjectSettings>
     {
         /// <summary>
@@ -13,11 +11,14 @@ namespace ApiTools.Codegen.Task.Configuration
         /// <returns>A matching <see cref="ProjectSettings"/> from this collection, otherwise <see langword="null"/>.</returns>
         public ProjectSettings Find(ProjectSettings project)
         {
-            foreach (var p in this)
+            if (project != null)
             {
-                if (project.Equals(p))
+                foreach (var p in this)
                 {
-                    return p;
+                    if (project.Equals(p))
+                    {
+                        return p;
+                    }
                 }
             }
 

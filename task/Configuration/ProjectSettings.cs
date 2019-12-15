@@ -2,7 +2,6 @@
 
 namespace ApiTools.Codegen.Task.Configuration
 {
-    [Serializable]
     public class ProjectSettings
     {
         /// <summary>
