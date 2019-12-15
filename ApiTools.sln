@@ -1,0 +1,59 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29519.87
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiTools.Codegen", "codegen\ApiTools.Codegen.csproj", "{24A61890-3879-41A4-91CA-3608EDD686FB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiTools", "source\ApiTools.csproj", "{4B4AAFDB-213A-42E7-A97A-8A450A8A35E1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiTools.Codegen.Cli", "cli\ApiTools.Codegen.Cli.csproj", "{774D21E5-81D7-4B24-A7FA-7021C90999B1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiTools.Codegen.Task", "task\ApiTools.Codegen.Task.csproj", "{8B516760-F9A4-4033-9232-FD460D4EAD2D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{9A2D5AB0-CB43-4269-BB6D-F07A0D1FA28A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample1", "Samples\Sample1\Sample1.csproj", "{D868855F-0E34-404B-B3A2-39611173524E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D57B1591-4B16-4E18-A950-FB82EB09E59B}"
+	ProjectSection(SolutionItems) = preProject
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		README.md = README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{24A61890-3879-41A4-91CA-3608EDD686FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24A61890-3879-41A4-91CA-3608EDD686FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24A61890-3879-41A4-91CA-3608EDD686FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24A61890-3879-41A4-91CA-3608EDD686FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B4AAFDB-213A-42E7-A97A-8A450A8A35E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B4AAFDB-213A-42E7-A97A-8A450A8A35E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B4AAFDB-213A-42E7-A97A-8A450A8A35E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B4AAFDB-213A-42E7-A97A-8A450A8A35E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{774D21E5-81D7-4B24-A7FA-7021C90999B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{774D21E5-81D7-4B24-A7FA-7021C90999B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{774D21E5-81D7-4B24-A7FA-7021C90999B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{774D21E5-81D7-4B24-A7FA-7021C90999B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B516760-F9A4-4033-9232-FD460D4EAD2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B516760-F9A4-4033-9232-FD460D4EAD2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B516760-F9A4-4033-9232-FD460D4EAD2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B516760-F9A4-4033-9232-FD460D4EAD2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D868855F-0E34-404B-B3A2-39611173524E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D868855F-0E34-404B-B3A2-39611173524E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D868855F-0E34-404B-B3A2-39611173524E} = {9A2D5AB0-CB43-4269-BB6D-F07A0D1FA28A}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {851B764A-D5BE-4EDD-950A-81627711A9B4}
+	EndGlobalSection
+EndGlobal

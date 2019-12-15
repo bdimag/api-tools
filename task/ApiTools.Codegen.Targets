@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <UsingTask TaskName="CreateClientsFromAssembly" AssemblyFile="$(MSBuildThisFileDirectory)ApiTools.Codegen.Task.dll" />
+    <ItemGroup>
+        <ApiToolsConfig Include="$(MSBuildThisFileDirectory)Defaults.json" />
+    </ItemGroup>
+    <Target Name="ApiToolsCodeGen" AfterTargets="AfterBuild">
+        <Exec Command="&quot;$(MSBuildToolsPath)\msbuild.exe&quot; &quot;$(ProjectPath)&quot; -target:ApiToolsCodeGen_Start" />
+    </Target>
+    <Target Name="ApiToolsCodeGen_Start">
+        <Message Text="ApiToolsConfig = @(ApiToolsConfig)" Importance="high" />
+        <CreateClientsFromAssembly Assembly="$(TargetPath)" ConfigFiles="@(ApiToolsConfig)">
+            <Output TaskParameter="FileWrites" ItemName="ApiToolsFileWrites"/>
+        </CreateClientsFromAssembly>
+    </Target>
+    <Target Name="ApiToolsCodeGen_FileWrites" AfterTargets="ApiToolsCodeGen_Start" Inputs="@ApiToolsFileWrites" Outputs="%(ApiToolsFileWrites.Identity)">
+        <WriteLinesToFile Lines="%(ApiToolsFileWrites.Identity)" File="$(IntermediateOutputPath)$(CleanFile)" />
+    </Target>
+</Project>

@@ -1,0 +1,17 @@
+﻿{
+    "Defualts": true,
+    "Projects": [
+        {
+            "Type": "WebApi",
+            "Enabled": true
+        },
+        {
+            "Type": "ClientLibrary",
+            "Enabled": true
+        },
+        {
+            "Type": "ClientScripts",
+            "Enabled": true
+        }
+    ]
+}

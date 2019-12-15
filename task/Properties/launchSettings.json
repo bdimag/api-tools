@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "ApiTools.Codegen.Task": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Windows\\Microsoft.NET\\Framework\\v4.0.30319\\MSBuild.exe",
+      "commandLineArgs": "..\\..\\..\\Samples\\ClassLibrary1\\Sample2.csproj"
+    }
+  }
+}
