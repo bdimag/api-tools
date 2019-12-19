@@ -14,9 +14,11 @@ namespace ApiTools.Codegen.Codegen
             var sb = new StringBuilder();
             foreach (var type in libraryBuilder.ClientTypes)
             {
+                var className = type.Identifier.ValueText;
+
                 sb.AppendLine($"namespace {package.Namespace}");
                 sb.AppendLine("{");
-                sb.AppendLine($"    export class {type.Name} extends ClientObject");
+                sb.AppendLine($"    export class {className} extends ClientObject");
                 sb.AppendLine("    {");
                 sb.AppendLine();
                 sb.AppendLine("    }");
@@ -24,7 +26,7 @@ namespace ApiTools.Codegen.Codegen
 
                 yield return new BuildFile
                 {
-                    Path = type.Name + ".ts",
+                    Path = className + ".ts",
                     Content = sb.ToString()
                 };
 

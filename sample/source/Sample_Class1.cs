@@ -4,7 +4,7 @@
     /// This is the first sample class.
     /// </summary>
     [ClientType("19b323ed-b8a4-4b9b-8907-2c37b75fb195")]
-    public class Sample_Class1 
+    public class Sample_Class1
     {
         /// <summary>
         /// Sample property with a complex-type value.

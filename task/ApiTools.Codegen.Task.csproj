@@ -38,9 +38,9 @@
     <ItemGroup>
         <Compile Include="Configuration\Config.cs" />
         <Compile Include="Configuration\ProjectSettingsCollection.cs" />
-        <Compile Include="CreateClientAssembly.cs" />
-        <Compile Include="CreateClientAssembly.ITask.cs">
-            <DependentUpon>CreateClientAssembly.cs</DependentUpon>
+        <Compile Include="GenerateClients.cs" />
+        <Compile Include="GenerateClients.ITask.cs">
+            <DependentUpon>GenerateClients.cs</DependentUpon>
         </Compile>
         <Compile Include="Configuration\ProjectSettings.cs" />
     </ItemGroup>

@@ -15,7 +15,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="apiconfig.json" />
+        <None Include="apiconfig.json" />
     </ItemGroup>
 
     <Import Project="..\..\task\bin\Debug\netstandard2.0\ApiTools.Codegen.targets" />

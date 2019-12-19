@@ -13,5 +13,5 @@ namespace ApiTools.Codegen.Codegen
             // web api shouldn't need much info about the types, if any
             yield break;
         }
-    }
+    }   
 }

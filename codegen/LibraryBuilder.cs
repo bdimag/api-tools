@@ -1,21 +1,24 @@
 ﻿using ApiTools.Codegen.Codegen;
 using ApiTools.Codegen.Docs;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Reflection;
 
 namespace ApiTools.Codegen
 {
     public sealed class LibraryBuilder : IDisposable
     {
-        private List<ClientType> clientTypes = new List<ClientType>();
+        private List<ClassDeclarationSyntax> clientTypes = new List<ClassDeclarationSyntax>();
 
         private List<Documentation> documentation = new List<Documentation>();
 
         private Dictionary<ProjectType, CodegenBase> generators = new Dictionary<ProjectType, CodegenBase>();
 
-        internal ICollection<ClientType> ClientTypes
+        internal ICollection<ClassDeclarationSyntax> ClientTypes
         {
             get
             {
@@ -23,11 +26,8 @@ namespace ApiTools.Codegen
             }
         }
 
-        public LibraryBuilder(IEnumerable<Type> types, Documentation documentation)
+        public LibraryBuilder()
         {
-            clientTypes.AddRange(types.Select(type => BuildType(type)));
-
-            this.documentation.Add(documentation);
         }
 
         private CodegenBase GetDefaultGenerator(ProjectType projectType)
@@ -53,49 +53,39 @@ namespace ApiTools.Codegen
             return generator;
         }
 
-        private T[] GetMembers<T>(Type type, MemberTypes filter = MemberTypes.All) where T : ClientMemberInfo
+        public void AddFile(Stream fileStream)
         {
-            var members = new List<T>();
-            foreach (var member in type.GetMembers(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static))
+            using (var reader = new StreamReader(fileStream))
             {
-                if (typeof(T) == typeof(ClientMethod) && member is MethodInfo method)
-                {
-                    // check for presence of the appropriate attribute
-                    if (!method.IsDefined(typeof(ClientMethodAttribute)))
-                        continue;
+                var textContent = reader.ReadToEnd();
+                var tree = CSharpSyntaxTree.ParseText(textContent);
 
-                    members.Add(new ClientMethod()
+                foreach (var classDeclaration in tree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>())
+                {
+                    var newClassDeclaration = SyntaxFactory.ClassDeclaration(classDeclaration.Identifier.ValueText);
+
+                    foreach (var node in classDeclaration.ChildNodes().OfType<MemberDeclarationSyntax>())
                     {
-                        IsStatic = method.IsStatic,
-                        Name = method.Name
-                    } as T);
+
+                        if (node is MethodDeclarationSyntax method)
+                        {
+                            var newMethod = SyntaxFactory.MethodDeclaration(method.ReturnType, method.Identifier.ValueText);
+
+                            newClassDeclaration.AddMembers(newMethod).NormalizeWhitespace();
+                        }
+                        else if (node is PropertyDeclarationSyntax property)
+                        {
+                            var newProperty = SyntaxFactory.PropertyDeclaration(property.Type, property.Identifier.ValueText);
+
+                            newClassDeclaration.AddMembers(newProperty).NormalizeWhitespace();
+                        }
+                    }
+
+                    newClassDeclaration.AddMembers(SyntaxFactory.PropertyDeclaration(SyntaxFactory.ParseTypeName("System.Object"), "Path"));
+
+                    clientTypes.Add(newClassDeclaration);
                 }
             }
-
-            return members.ToArray();
-        }
-
-        internal ClientType BuildType(Type type)
-        {
-            if (type is null)
-            {
-                throw new ArgumentNullException(nameof(type));
-            }
-
-            if (!type.IsDefined(typeof(ClientTypeAttribute)))
-            {
-                throw new InvalidOperationException($"Type must have the {nameof(ClientTypeAttribute)} applied.");
-            }
-
-            var clientType = new ClientType()
-            {
-                Name = type.Name,
-                Constructors = GetMembers<ClientMethod>(type, MemberTypes.Constructor),
-                Methods = GetMembers<ClientMethod>(type),
-                Properties = GetMembers<ClientProperty>(type)
-            };
-
-            return clientType;
         }
 
         public IEnumerable<BuildFile> Build(ProjectType projectType, string name, string ns)
@@ -110,5 +100,45 @@ namespace ApiTools.Codegen
         public void Dispose()
         {
         }
+    }
+
+    internal static class SyntaxExtensions
+    {
+        internal static bool HasClientAttribute(this MemberDeclarationSyntax memberDeclaration)
+        {
+            // TODO
+
+            foreach (var attribute in memberDeclaration.AttributeLists.SelectMany(list => list.Attributes))
+            {
+                string name = null;
+
+                var qualifiedName = attribute.ChildNodes().OfType<QualifiedNameSyntax>().FirstOrDefault();
+                if (qualifiedName != null)
+                {
+                    name = qualifiedName.Right.Identifier.ValueText;
+                    
+                }
+
+                var identifier = attribute.ChildNodes().OfType<IdentifierNameSyntax>().FirstOrDefault();
+                if (identifier != null)
+                {
+                    name = identifier.Identifier.ValueText;
+                }
+
+                if (name  == "ClientMethod" || name == "ClientProperty")
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal static ClientTypeAttribute GetClientAttribute(this ClassDeclarationSyntax classDeclaration)
+        {
+            throw new NotImplementedException();
+        }
+
+        
     }
 }

@@ -1,23 +1,25 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-    <UsingTask TaskName="CreateClientsFromAssembly" AssemblyFile="$(MSBuildThisFileDirectory)ApiTools.Codegen.Task.dll" />
+    <UsingTask TaskName="GenerateClients" AssemblyFile="$(MSBuildThisFileDirectory)ApiTools.Codegen.Task.dll" />
     <ItemGroup>
         <ApiToolsConfig Include="$(MSBuildThisFileDirectory)Defaults.json">
             <Default>True</Default>
         </ApiToolsConfig>
+        <CompileGenerated Include="@(Compile)">
+            <Generator>MSBuild:ApiToolsCodeGen</Generator>
+        </CompileGenerated>
     </ItemGroup>
-    <Target Name="ApiToolsCodeGen" AfterTargets="AfterBuild">
-        <Exec Command="&quot;$(MSBuildToolsPath)\msbuild.exe&quot; &quot;$(ProjectPath)&quot; -target:ApiToolsCodeGen_Start" ConsoleToMSBuild="true" EchoOff="true" />
+    <Target Name="ApiToolsCodeGen" DependsOnTargets="_ApiToolsCodeGen" BeforeTargets="CoreCompile">
+        <ItemGroup>
+            <FileWrites Include="@(ApiToolsFileWrites)" />
+        </ItemGroup>
     </Target>
-    <Target Name="ApiToolsCodeGen_Start">
+    <Target Name="_ApiToolsCodeGen">
         <ItemGroup>
             <ApiToolsConfig Include="@(None);@(Content)" Condition="'%(Filename)%(Extension)' == 'apiconfig.json'" />
         </ItemGroup>
-        <CreateClientsFromAssembly Assembly="$(TargetPath)" ConfigFiles="@(ApiToolsConfig)" ContinueOnError="WarnAndContinue">
+        <GenerateClients ConfigFiles="@(ApiToolsConfig)" CompileFiles="@(Compile)" DefaultNamespace="$(RootNameSpace)" DefaultDirectory="$(TargetDir)">
             <Output TaskParameter="FileWrites" ItemName="ApiToolsFileWrites"/>
-        </CreateClientsFromAssembly>
-    </Target>
-    <Target Name="ApiToolsCodeGen_FileWrites" AfterTargets="ApiToolsCodeGen_Start" Inputs="@ApiToolsFileWrites" Outputs="%(ApiToolsFileWrites.Identity)">
-        <WriteLinesToFile Lines="%(ApiToolsFileWrites.Identity)" File="$(IntermediateOutputPath)$(CleanFile)" />
+        </GenerateClients>
     </Target>
 </Project>

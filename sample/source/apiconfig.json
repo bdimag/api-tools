@@ -6,6 +6,7 @@
             "OutputPath": "..\\api"
         },
         {
+            "Namespace": "Sample.Client",
             "Type": "ClientLibrary",
             "Enabled": true,
             "OutputPath": "..\\client"

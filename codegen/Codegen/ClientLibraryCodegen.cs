@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Text;
+﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ApiTools.Codegen.Codegen
 {
@@ -11,24 +14,21 @@ namespace ApiTools.Codegen.Codegen
 
         public override IEnumerable<BuildFile> Compile(BuildPackage package)
         {
-            var sb = new StringBuilder();
             foreach (var type in libraryBuilder.ClientTypes)
             {
-                sb.AppendLine($"namespace {package.Namespace}");
-                sb.AppendLine("{");
-                sb.AppendLine($"    public class {type.Name} : ClientObject");
-                sb.AppendLine("    {");
-                sb.AppendLine();
-                sb.AppendLine("    }");
-                sb.AppendLine("}");
+                var className = type.Identifier.ValueText;
+
+                var ns = CSharpSyntaxTree.ParseText($"namespace {package.Namespace} {{ }}")
+                    .GetRoot()
+                    .DescendantNodes().OfType<NamespaceDeclarationSyntax>().First();
+
+                var result = ns.AddMembers(type).NormalizeWhitespace();
 
                 yield return new BuildFile
                 {
-                    Path = type.Name + ".cs",
-                    Content = sb.ToString()
+                    Path = className + ".cs",
+                    Content = result.ToString()
                 };
-
-                sb.Clear();
             }
 
             yield break;
