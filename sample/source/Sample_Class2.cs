@@ -1,5 +1,8 @@
 ﻿namespace ApiTools
 {
+    /// <summary>
+    /// This is the second sample class.
+    /// </summary>
     [ClientType("ca449798-1901-44b0-8a50-cb0242c028a5")]
     public class Sample_Class2
     {

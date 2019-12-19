@@ -1,8 +1,10 @@
-﻿using ApiTools.Codegen.Task.Configuration;
+﻿using ApiTools.Codegen.Docs;
+using ApiTools.Codegen.Task.Configuration;
 using Microsoft.Build.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -95,7 +97,7 @@ namespace ApiTools.Codegen.Task
         }
 
         /// <summary>
-        /// Generates a single <see cref="Config"/> based on all configuration files that were provided to the task.
+        /// Generates a single <see cref="Config"/> instance based on values from all configurations specified in the target project.
         /// </summary>
         /// <returns></returns>
         internal Config GetEffectiveConfiguration()
@@ -104,73 +106,53 @@ namespace ApiTools.Codegen.Task
             {
                 var effConfig = new Config();
 
-                if (ConfigFiles != null)
+                // get the best values from all configurations
+                foreach (var config in GetValidConfigurations().OrderBy(c => !c.Defaults))
                 {
-                    foreach (var configFile in ConfigFiles)
+                    var configDirectory = Path.GetDirectoryName(config.Source);
+
+                    if (!string.IsNullOrEmpty(config.DefaultNamespace))
                     {
-                        string configPath = configFile.GetMetadata("FullPath");
-                        if (string.IsNullOrEmpty(configPath) || !File.Exists(configPath))
+                        effConfig.DefaultNamespace = config.DefaultNamespace;
+                    }
+                    if (!string.IsNullOrEmpty(config.DefaultOutputPath))
+                    {
+                        effConfig.DefaultOutputPath = GetAbsolutePath(config.DefaultOutputPath, configDirectory);
+                    }
+                    if (config.Projects != null)
+                    {
+                        // merge projects from all configs
+                        foreach (var project in config.Projects)
                         {
-                            WriteMessage($"Invalid config path specified: \"{configFile.GetMetadata("FullPath")}\".");
-                            continue;
-                        }
-
-                        string configDirectory = Path.GetDirectoryName(configPath);
-                        Config config = null;
-                        try
-                        {
-                            var jsonSerializerOptions = new JsonSerializerOptions();
-                            jsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-                            config = JsonSerializer.Deserialize<Config>(File.ReadAllText(configPath), jsonSerializerOptions);
-                        }
-                        catch (JsonException ex)
-                        {
-                            WriteMessage($"Invalid config file at \"{configPath}\": {ex.Message}.");
-                            continue;
-                        }
-
-                        if (!string.IsNullOrEmpty(config.DefaultNamespace))
-                        {
-                            effConfig.DefaultNamespace = config.DefaultNamespace;
-                        }
-                        if (!string.IsNullOrEmpty(config.DefaultOutputPath))
-                        {
-                            effConfig.DefaultOutputPath = GetAbsolutePath(config.DefaultOutputPath, configDirectory);
-                        }
-                        if (config.Projects != null)
-                        {
-                            foreach (var project in config.Projects)
+                            var existingProject = effConfig.Projects.Find(project);
+                            if (existingProject != null)
                             {
-                                var existingProject = effConfig.Projects.Find(project);
-                                if (existingProject != null)
+                                if (project.Enabled.HasValue)
                                 {
-                                    if (project.Enabled.HasValue)
-                                    {
-                                        existingProject.Enabled = project.Enabled;
-                                    }
-                                    if (!string.IsNullOrEmpty(project.Namespace))
-                                    {
-                                        existingProject.Namespace = project.Namespace;
-                                    }
-                                    if (!string.IsNullOrEmpty(project.Name))
-                                    {
-                                        existingProject.Name = project.Name;
-                                    }
-                                    if (!string.IsNullOrEmpty(project.OutputPath))
-                                    {
-                                        existingProject.OutputPath = GetAbsolutePath(project.OutputPath, configDirectory);
-                                    }
+                                    existingProject.Enabled = project.Enabled;
                                 }
-                                else
+                                if (!string.IsNullOrEmpty(project.Namespace))
                                 {
-                                    effConfig.Projects.Add(project);
+                                    existingProject.Namespace = project.Namespace;
                                 }
+                                if (!string.IsNullOrEmpty(project.Name))
+                                {
+                                    existingProject.Name = project.Name;
+                                }
+                                if (!string.IsNullOrEmpty(project.OutputPath))
+                                {
+                                    existingProject.OutputPath = GetAbsolutePath(project.OutputPath, configDirectory);
+                                }
+                            }
+                            else
+                            {
+                                effConfig.Projects.Add(project);
                             }
                         }
                     }
                 }
 
-                // defaults based on values known to the task
+                // add defaults based on values known to the task
                 if (string.IsNullOrEmpty(effConfig.DefaultOutputPath))
                 {
                     effConfig.DefaultOutputPath = Path.GetDirectoryName(Assembly);
@@ -179,6 +161,8 @@ namespace ApiTools.Codegen.Task
                 {
                     effConfig.DefaultNamespace = Path.GetFileNameWithoutExtension(Assembly);
                 }
+
+                // update each project with defaults from the overall config if needed
                 foreach (var project in effConfig.Projects)
                 {
                     if (string.IsNullOrEmpty(project.Namespace))
@@ -201,6 +185,48 @@ namespace ApiTools.Codegen.Task
             return effectiveConfiguration;
         }
 
+        /// <summary>
+        /// Retrieves configurations specified in the target project that can be deserialized.
+        /// </summary>
+        internal IEnumerable<Config> GetValidConfigurations()
+        {
+            var configFiles = new List<Config>();
+
+            if (ConfigFiles != null)
+            {
+                foreach (var configFile in ConfigFiles)
+                {
+                    string configPath = configFile.GetMetadata("FullPath");
+                    string defaults = configFile.GetMetadata("Default");
+                    if (string.IsNullOrEmpty(configPath) || !File.Exists(configPath))
+                    {
+                        WriteMessage($"Invalid config path specified: \"{configFile.GetMetadata("FullPath")}\".");
+                        continue;
+                    }
+
+                    Config config;
+                    try
+                    {
+                        var jsonSerializerOptions = new JsonSerializerOptions();
+                        jsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                        config = JsonSerializer.Deserialize<Config>(File.ReadAllText(configPath), jsonSerializerOptions);
+                    }
+                    catch (JsonException ex)
+                    {
+                        WriteMessage($"Invalid config file at \"{configPath}\": {ex.Message}.");
+                        continue;
+                    }
+
+                    config.Source = configPath;
+                    config.Defaults = bool.TryParse(defaults, out bool result) && result;
+
+                    configFiles.Add(config);
+                }
+            }
+
+            return configFiles;
+        }
+
         // main entry point of this task
         public bool Execute()
         {
@@ -216,8 +242,20 @@ namespace ApiTools.Codegen.Task
                 throw new Exception($"Failed to load assembly or references for \"{Assembly}\".", ex);
             }
 
+            // look for any xml documentation associated with the assembly
+            var xmlDocPath = Path.Combine(Path.GetDirectoryName(Assembly), Path.GetFileNameWithoutExtension(Assembly) + ".xml");
+            Documentation assemblyDocumentation = null;
+            if (File.Exists(xmlDocPath))
+            {
+                using (var fileStream = File.Open(xmlDocPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    assemblyDocumentation = Documentation.LoadFromXml(fileStream);
+                }
+            }
+
+            // start building output
             var fileWrites = new List<string>();
-            using (var builder = new LibraryBuilder(types))
+            using (var builder = new LibraryBuilder(types, assemblyDocumentation))
             {
                 foreach (var project in GetEffectiveConfiguration().Projects)
                 {
@@ -241,7 +279,7 @@ namespace ApiTools.Codegen.Task
                         }
 
                         // write the file to disk
-                        using (var fileStream = File.OpenWrite(filePath))
+                        using (var fileStream = File.Open(filePath, FileMode.Create, FileAccess.Write, FileShare.Read))
                         using (var streamWriter = new StreamWriter(fileStream))
                         {
                             WriteMessage($"Writing {project.Type} project file \"{filePath}\"");

@@ -1,4 +1,6 @@
-﻿namespace ApiTools.Codegen
+﻿using ApiTools.Codegen.Docs;
+
+namespace ApiTools.Codegen
 {
     public abstract class ClientMemberInfo
     {

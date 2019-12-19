@@ -1,4 +1,5 @@
 ﻿using ApiTools.Codegen.Codegen;
+using ApiTools.Codegen.Docs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,12 +9,9 @@ namespace ApiTools.Codegen
 {
     public sealed class LibraryBuilder : IDisposable
     {
-        public LibraryBuilder(IEnumerable<Type> types)
-        {
-            clientTypes.AddRange(types.Select(type => BuildType(type)));
-        }
-
         private List<ClientType> clientTypes = new List<ClientType>();
+
+        private List<Documentation> documentation = new List<Documentation>();
 
         private Dictionary<ProjectType, CodegenBase> generators = new Dictionary<ProjectType, CodegenBase>();
 
@@ -23,6 +21,13 @@ namespace ApiTools.Codegen
             {
                 return clientTypes.AsReadOnly();
             }
+        }
+
+        public LibraryBuilder(IEnumerable<Type> types, Documentation documentation)
+        {
+            clientTypes.AddRange(types.Select(type => BuildType(type)));
+
+            this.documentation.Add(documentation);
         }
 
         private CodegenBase GetDefaultGenerator(ProjectType projectType)
@@ -84,7 +89,7 @@ namespace ApiTools.Codegen
 
             var clientType = new ClientType()
             {
-                Name= type.Name,
+                Name = type.Name,
                 Constructors = GetMembers<ClientMethod>(type, MemberTypes.Constructor),
                 Methods = GetMembers<ClientMethod>(type),
                 Properties = GetMembers<ClientProperty>(type)

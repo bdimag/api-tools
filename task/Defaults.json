@@ -1,5 +1,4 @@
 ﻿{
-    "Defualts": true,
     "Projects": [
         {
             "Type": "WebApi",

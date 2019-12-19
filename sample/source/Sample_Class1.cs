@@ -1,5 +1,8 @@
 ﻿namespace ApiTools
 {
+    /// <summary>
+    /// This is the first sample class.
+    /// </summary>
     [ClientType("19b323ed-b8a4-4b9b-8907-2c37b75fb195")]
     public class Sample_Class1 
     {
@@ -9,9 +12,7 @@
         [ClientProperty]
         public Sample_Class2 Sample_ComplexProp { get; set; }
 
-        /// <summary>
-        /// Sample property with a simple value.
-        /// </summary>
+        /// Sample property with a simple value. This documenation has no xml.
         [ClientProperty]
         public string Sample_ValueProp { get; set; }
 

@@ -3,6 +3,7 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -11,6 +12,10 @@
 
     <ItemGroup>
       <Folder Include="Properties\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="apiconfig.json" />
     </ItemGroup>
 
     <Import Project="..\..\task\bin\Debug\netstandard2.0\ApiTools.Codegen.targets" />
